@@ -8,6 +8,7 @@ class User(AbstractUser):
     ROLE_CHOICES = [
         ('fan', 'Fan'),
         ('organizer', 'Event Organizer'),
+        ('gate_staff', 'Gate Staff'),
         ('admin', 'Administrator'),
     ]
     

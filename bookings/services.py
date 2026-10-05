@@ -86,6 +86,8 @@ def release_hold(booking, fan):
         raise InvalidBooking('You can only release your own bookings.')
     if booking.status != 'pending':
         raise InvalidBooking(f'Cannot release a {booking.status} booking.')
+    if booking.payments.filter(status='pending').exists():
+        raise InvalidBooking('A payment for this seat is in progress.')
     booking.status = 'cancelled'
     booking.save(update_fields=['status'])
     return booking

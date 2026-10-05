@@ -5,7 +5,8 @@ from .models import GateEntry
 
 @admin.register(GateEntry)
 class GateEntryAdmin(admin.ModelAdmin):
-    list_display = ('ticket', 'scan_time', 'entry_allowed', 'notes')
-    list_filter = ('entry_allowed',)
-    search_fields = ('ticket__qr_token',)
+    list_display = ('scan_time', 'entry_allowed', 'ticket', 'scanned_by', 'notes')
+    list_filter = ('entry_allowed', 'ticket__booking__event')
+    search_fields = ('scanned_token', 'ticket__qr_token', 'notes')
     readonly_fields = ('scan_time',)
+    raw_id_fields = ('ticket', 'scanned_by')

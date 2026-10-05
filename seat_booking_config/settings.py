@@ -209,6 +209,19 @@ AUTH_USER_MODEL = 'users.User'
 # Seat booking
 SEAT_HOLD_DURATION_MINUTES = config('SEAT_HOLD_DURATION_MINUTES', default=10, cast=int)
 
+# M-Pesa Daraja (STK Push). Sandbox credentials: https://developer.safaricom.co.ke
+DARAJA_ENV = config('DARAJA_ENV', default='sandbox')  # 'sandbox' or 'production'
+DARAJA_BASE_URL = ('https://api.safaricom.co.ke' if DARAJA_ENV == 'production'
+                   else 'https://sandbox.safaricom.co.ke')
+DARAJA_CONSUMER_KEY = config('DARAJA_CONSUMER_KEY', default='')
+DARAJA_CONSUMER_SECRET = config('DARAJA_CONSUMER_SECRET', default='')
+DARAJA_BUSINESS_SHORTCODE = config('DARAJA_BUSINESS_SHORTCODE', default='174379')
+DARAJA_PASSKEY = config('DARAJA_PASSKEY', default='')
+# Public HTTPS base URL Safaricom can reach (e.g. an ngrok URL in development).
+DARAJA_CALLBACK_BASE_URL = config('DARAJA_CALLBACK_BASE_URL', default='')
+# Secret path segment so only Safaricom (who is given the full URL) can post payment results.
+DARAJA_CALLBACK_TOKEN = config('DARAJA_CALLBACK_TOKEN', default='')
+
 # Security Settings
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
