@@ -205,6 +205,9 @@ SIMPLE_JWT = {
 # Authentication
 AUTH_USER_MODEL = 'users.User'
 
+# Seat booking
+SEAT_HOLD_DURATION_MINUTES = config('SEAT_HOLD_DURATION_MINUTES', default=10, cast=int)
+
 # Security Settings
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
