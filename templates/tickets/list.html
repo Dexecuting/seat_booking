@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My tickets{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/tickets.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>My tickets</h1>
+  <p>Open a ticket and show its QR code at the gate.</p>
+</div>
+
+<div id="pending-holds"></div>
+
+<div id="ticket-list" aria-live="polite">
+  <div class="state"><div class="spinner"></div>Loading your tickets…</div>
+</div>
+{% endblock %}

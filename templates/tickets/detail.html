@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ticket{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/tickets.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<a class="back-link" href="/tickets/">&larr; My tickets</a>
+
+<div id="ticket-detail" data-ticket-id="{{ pk }}" aria-live="polite">
+  <div class="state"><div class="spinner"></div>Loading ticket…</div>
+</div>
+{% endblock %}

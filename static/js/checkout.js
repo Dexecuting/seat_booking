@@ -215,7 +215,8 @@
             h('figcaption', { class: 'muted' }, `Ticket #${ticket.id} · also sent to your email`))
         : h('div', { class: 'alert alert-info' }, 'Your ticket is being prepared and will be emailed to you.'),
       summary(),
-      h('a', { class: 'btn btn-secondary btn-block', href: '/events/' }, 'Browse more events'),
+      h('a', { class: 'btn btn-block', href: ticket ? `/tickets/${ticket.id}/` : '/tickets/' }, 'Go to my tickets'),
+      h('a', { class: 'btn btn-secondary btn-block success-more', href: '/events/' }, 'Browse more events'),
     );
   }
 
