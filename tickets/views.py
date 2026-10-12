@@ -13,7 +13,7 @@ class TicketViewSet(viewsets.ReadOnlyModelViewSet):
     GET  /api/tickets/<id>/         - one ticket, including its QR code image
     POST /api/tickets/<id>/resend/  - email the ticket again
     """
-    filterset_fields = ['is_used', 'booking__event']
+    filterset_fields = ['is_used', 'booking', 'booking__event']
 
     def get_queryset(self):
         return (Ticket.objects.filter(booking__fan=self.request.user)

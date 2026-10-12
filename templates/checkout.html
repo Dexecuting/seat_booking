@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/checkout.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<div id="checkout" class="checkout" data-booking-id="{{ pk }}" aria-live="polite">
+  <div class="state"><div class="spinner"></div>Loading your booking…</div>
+</div>
+{% endblock %}

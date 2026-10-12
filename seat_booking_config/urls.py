@@ -26,4 +26,5 @@ urlpatterns = [
     path('events/<int:pk>/', page('events/detail.html'), name='event-detail'),
     path('login/', page('auth/login.html'), name='login'),
     path('register/', page('auth/register.html'), name='register'),
+    path('checkout/<int:pk>/', page('checkout.html'), name='checkout'),
 ]
