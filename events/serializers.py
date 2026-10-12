@@ -10,11 +10,17 @@ class EventSerializer(serializers.ModelSerializer):
     venue = serializers.PrimaryKeyRelatedField(queryset=Venue.objects.all())
     venue_name = serializers.CharField(source='venue.name', read_only=True)
     venue_location = serializers.CharField(source='venue.location', read_only=True)
+    price_from = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = ('id', 'title', 'description', 'venue', 'venue_name', 'venue_location',
-                  'event_date', 'event_time', 'status')
+                  'event_date', 'event_time', 'status', 'price_from')
+
+    def get_price_from(self, event):
+        """Cheapest seat category at the venue (annotated by EventViewSet), as a string like '300.00'."""
+        price = getattr(event, 'price_from', None)
+        return f'{price:.2f}' if price is not None else None
 
     def validate_event_date(self, value):
         unchanged = self.instance and self.instance.event_date == value

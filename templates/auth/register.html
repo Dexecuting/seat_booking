@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create account{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/auth.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<div class="form-card">
+  <h1>Create your account</h1>
+  <p class="muted">Book seats and get your tickets on your phone.</p>
+
+  <div class="alert alert-error" id="form-error" role="alert" hidden></div>
+
+  <form id="register-form" novalidate>
+    <div class="field-row">
+      <div class="field">
+        <label for="first_name">First name</label>
+        <input id="first_name" name="first_name" autocomplete="given-name" required>
+        <div class="field-error" data-error-for="first_name"></div>
+      </div>
+      <div class="field">
+        <label for="last_name">Last name</label>
+        <input id="last_name" name="last_name" autocomplete="family-name" required>
+        <div class="field-error" data-error-for="last_name"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" required>
+      <div class="field-error" data-error-for="username"></div>
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required>
+      <div class="hint">Your tickets are emailed here.</div>
+      <div class="field-error" data-error-for="email"></div>
+    </div>
+    <div class="field">
+      <label for="phone">M-Pesa phone number</label>
+      <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0712 345 678" required>
+      <div class="field-error" data-error-for="phone"></div>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+      <div class="hint">At least 8 characters, not just numbers.</div>
+      <div class="field-error" data-error-for="password"></div>
+    </div>
+    <button class="btn btn-block" type="submit">Create account</button>
+  </form>
+
+  <p class="form-footer">Already have an account? <a href="/login/" data-keep-next>Log in</a></p>
+</div>
+{% endblock %}

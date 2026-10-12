@@ -1,6 +1,7 @@
 import re
 
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -58,7 +59,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         user = User(**{k: v for k, v in attrs.items() if k != 'password'})
-        validate_password(attrs['password'], user)
+        try:
+            validate_password(attrs['password'], user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({'password': list(exc.messages)})
         return attrs
 
     @transaction.atomic

@@ -1,5 +1,7 @@
 from collections import Counter
 
+from django.db.models import Min
+
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,7 +18,9 @@ class EventViewSet(viewsets.ModelViewSet):
     /api/events/ - public list/detail; organizers can create and edit.
     Filter with ?status=upcoming&venue=1, search with ?search=gor.
     """
-    queryset = Event.objects.select_related('venue').order_by('event_date', 'event_time')
+    queryset = (Event.objects.select_related('venue')
+                .annotate(price_from=Min('venue__categories__price'))
+                .order_by('event_date', 'event_time'))
     serializer_class = EventSerializer
     permission_classes = [IsOrganizerOrReadOnly]
     filterset_fields = ['status', 'venue']

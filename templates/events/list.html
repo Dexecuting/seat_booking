@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Events{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/events.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Upcoming events</h1>
+  <p>Pick a match, choose your exact seat, and pay with M-Pesa.</p>
+</div>
+
+<div class="toolbar" role="search">
+  <label class="sr-only" for="event-search">Search events</label>
+  <input class="search" id="event-search" type="search" placeholder="Search by team or venue…" autocomplete="off">
+
+  <label class="sr-only" for="event-status">Show</label>
+  <select id="event-status">
+    <option value="upcoming">Upcoming</option>
+    <option value="ongoing">Happening now</option>
+    <option value="completed">Past</option>
+    <option value="">All events</option>
+  </select>
+</div>
+
+<div id="event-results" aria-live="polite"></div>
+
+<div class="load-more">
+  <button class="btn btn-secondary" id="load-more" type="button" hidden>Load more events</button>
+</div>
+{% endblock %}

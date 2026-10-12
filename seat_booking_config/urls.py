@@ -1,8 +1,17 @@
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import RedirectView, TemplateView
+
+
+def page(template):
+    """Frontend pages are static shells; their JavaScript loads data from /api/."""
+    return TemplateView.as_view(template_name=template)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # API
     path('api/auth/', include('users.urls')),
     path('api/venues/', include('venues.urls')),
     path('api/events/', include('events.urls')),
@@ -10,4 +19,11 @@ urlpatterns = [
     path('api/payments/', include('payments.urls')),
     path('api/tickets/', include('tickets.urls')),
     path('api/gates/', include('gates.urls')),
+
+    # Frontend pages
+    path('', RedirectView.as_view(url='/events/', permanent=False)),
+    path('events/', page('events/list.html'), name='events'),
+    path('events/<int:pk>/', page('events/detail.html'), name='event-detail'),
+    path('login/', page('auth/login.html'), name='login'),
+    path('register/', page('auth/register.html'), name='register'),
 ]

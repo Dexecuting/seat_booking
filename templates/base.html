@@ -1,0 +1,50 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Seat Booking{% endblock %} · KenyaSeats</title>
+  <meta name="description" content="Book specific seats for sports events in Kenya, pay with M-Pesa and enter with a QR ticket.">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <script src="{% static 'js/api.js' %}" defer></script>
+  {% block scripts %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true"></span>
+        KenyaSeats
+      </a>
+
+      <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">Menu</span>
+        <span class="menu-icon" aria-hidden="true"></span>
+      </button>
+
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+        <a href="/events/">Events</a>
+        <span class="nav-spacer"></span>
+        <a href="/login/" data-auth="out">Log in</a>
+        <a href="/register/" class="btn btn-small" data-auth="out">Sign up</a>
+        <span class="nav-user" data-auth="in" hidden>
+          <span data-user-name></span>
+          <button type="button" class="link-btn" id="logout-btn">Log out</button>
+        </span>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="container main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      KenyaSeats &middot; Pick your seat, pay with M-Pesa, scan in at the gate.
+    </div>
+  </footer>
+</body>
+</html>

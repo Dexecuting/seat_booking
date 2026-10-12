@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Log in{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/auth.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<div class="form-card">
+  <h1>Log in</h1>
+  <p class="muted">Welcome back. Log in to book your seat.</p>
+
+  <div class="alert alert-error" id="form-error" role="alert" hidden></div>
+
+  <form id="login-form" novalidate>
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" required autofocus>
+      <div class="field-error" data-error-for="username"></div>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <div class="field-error" data-error-for="password"></div>
+    </div>
+    <button class="btn btn-block" type="submit">Log in</button>
+  </form>
+
+  <p class="form-footer">New here? <a href="/register/" data-keep-next>Create an account</a></p>
+</div>
+{% endblock %}
