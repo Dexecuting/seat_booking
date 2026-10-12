@@ -23,7 +23,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 .order_by('event_date', 'event_time'))
     serializer_class = EventSerializer
     permission_classes = [IsOrganizerOrReadOnly]
-    filterset_fields = ['status', 'venue']
+    filterset_fields = ['status', 'venue', 'event_date']
     search_fields = ['title', 'venue__name']
     ordering_fields = ['event_date', 'title']
 

@@ -29,4 +29,5 @@ urlpatterns = [
     path('checkout/<int:pk>/', page('checkout.html'), name='checkout'),
     path('tickets/', page('tickets/list.html'), name='tickets'),
     path('tickets/<int:pk>/', page('tickets/detail.html'), name='ticket-detail'),
+    path('gate/', page('gate.html'), name='gate'),
 ]

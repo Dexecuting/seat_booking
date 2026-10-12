@@ -25,6 +25,10 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 
+# Full origins (scheme + host) allowed to submit forms over HTTPS, e.g. your ngrok address,
+# so the Django admin login works there. Wildcards like https://*.ngrok-free.app are allowed.
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='', cast=lambda v: [s.strip() for s in v.split(',') if s.strip()])
+
 
 # Application definition
 

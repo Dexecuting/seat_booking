@@ -99,3 +99,8 @@ class AuthTests(APITestCase):
 
         self.assertEqual(self.client.post('/api/auth/logout/', {'refresh': refresh}).status_code, 205)
         self.assertEqual(self.client.post('/api/auth/refresh/', {'refresh': refresh}).status_code, 401)
+
+    def test_superuser_token_has_admin_role(self):
+        User.objects.create_superuser(username='boss', password='Str0ng-pass!', email='boss@example.com')
+        res = self.login(username='boss')
+        self.assertEqual(AccessToken(res.data['access'])['role'], 'admin')

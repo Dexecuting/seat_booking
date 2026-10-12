@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gate scanner{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/gate.js' %}" data-jsqr-src="{% static 'js/vendor/jsQR.js' %}" id="gate-script" defer></script>{% endblock %}
+
+{% block content %}
+<div class="gate" id="gate">
+  <div class="gate-head">
+    <h1>Gate scanner</h1>
+    <div class="gate-counts" aria-live="polite">
+      <span class="count-in"><strong id="count-allowed">0</strong> admitted</span>
+      <span class="count-out"><strong id="count-denied">0</strong> denied</span>
+    </div>
+  </div>
+
+  <div class="alert alert-error" id="gate-denied-role" hidden>
+    This page is for gate staff, organizers and administrators. Log in with a gate staff account.
+  </div>
+
+  <div class="field gate-event">
+    <label for="gate-event">Admitting for</label>
+    <select id="gate-event">
+      <option value="">Any event today</option>
+    </select>
+    <div class="hint">Tickets for other events will be denied.</div>
+  </div>
+
+  <section class="scanner-panel" aria-labelledby="camera-title">
+    <h2 id="camera-title" class="sr-only">Camera</h2>
+    <div class="camera" id="camera">
+      <video id="camera-video" playsinline muted hidden></video>
+      <div class="camera-frame" aria-hidden="true" hidden id="camera-frame"></div>
+      <div class="camera-idle" id="camera-idle">
+        <p>Point the camera at the QR code on the fan's ticket.</p>
+        <button class="btn" type="button" id="camera-start">Start camera</button>
+      </div>
+    </div>
+    <div class="alert alert-error" id="camera-error" role="alert" hidden></div>
+    <button class="btn btn-secondary btn-small camera-stop" type="button" id="camera-stop" hidden>Stop camera</button>
+  </section>
+
+  <form class="manual-entry" id="manual-form" autocomplete="off">
+    <label for="manual-token">Can't scan? Type or paste the ticket code</label>
+    <div class="manual-row">
+      <input id="manual-token" name="token" spellcheck="false" autocapitalize="off" placeholder="Ticket code">
+      <button class="btn" type="submit">Check</button>
+    </div>
+  </form>
+
+  <section class="recent" aria-labelledby="recent-title">
+    <h2 id="recent-title">Recent scans</h2>
+    <ol class="recent-list" id="recent-list"><li class="muted">No scans yet.</li></ol>
+  </section>
+</div>
+
+<div class="scan-result" id="scan-result" role="alertdialog" aria-live="assertive" aria-labelledby="result-title" hidden>
+  <div class="result-icon" id="result-icon" aria-hidden="true"></div>
+  <div class="result-title" id="result-title"></div>
+  <div class="result-reason" id="result-reason"></div>
+  <div class="result-ticket" id="result-ticket"></div>
+  <button class="btn result-next" type="button" id="result-next">Next fan</button>
+</div>
+{% endblock %}

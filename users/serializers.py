@@ -79,7 +79,8 @@ class TokenWithRoleSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['username'] = user.username
-        token['role'] = user.role
+        # Superusers can do everything an admin can, whatever their role field says.
+        token['role'] = 'admin' if user.is_superuser else user.role
         return token
 
     def validate(self, attrs):
