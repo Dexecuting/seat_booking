@@ -22,6 +22,12 @@ class EventSerializer(serializers.ModelSerializer):
         price = getattr(event, 'price_from', None)
         return f'{price:.2f}' if price is not None else None
 
+    def validate_venue(self, value):
+        # Bookings point at this venue's seats, so the venue is fixed once anyone has booked.
+        if self.instance and self.instance.venue_id != value.id and self.instance.bookings.exists():
+            raise serializers.ValidationError('The venue cannot be changed after seats have been booked.')
+        return value
+
     def validate_event_date(self, value):
         unchanged = self.instance and self.instance.event_date == value
         if not unchanged and value < timezone.localdate():

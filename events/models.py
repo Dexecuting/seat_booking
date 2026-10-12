@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from venues.models import Venue
 
@@ -15,6 +16,11 @@ class Event(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     venue = models.ForeignKey(Venue, on_delete=models.CASCADE, related_name='events')
+    organizer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='organized_events',
+        help_text='Organizer who owns this event. Events without one are managed by administrators.',
+    )
     event_date = models.DateField()
     event_time = models.TimeField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='upcoming')

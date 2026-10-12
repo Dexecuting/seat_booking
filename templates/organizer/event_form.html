@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if pk %}Edit event{% else %}New event{% endif %}{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/organizer-events.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<a class="back-link" href="/organizer/events/">&larr; My events</a>
+
+<div class="form-card form-wide" id="event-form-card" data-event-id="{{ pk|default:'' }}">
+  <h1>{% if pk %}Edit event{% else %}New event{% endif %}</h1>
+
+  <div class="alert alert-error" id="form-error" role="alert" hidden></div>
+
+  <form id="event-form" method="post" novalidate>
+    <div class="field">
+      <label for="title">Event title</label>
+      <input id="title" name="title" maxlength="255" placeholder="e.g. Gor Mahia vs AFC Leopards" required>
+      <div class="field-error" data-error-for="title"></div>
+    </div>
+
+    <div class="field">
+      <label for="venue">Venue</label>
+      <select id="venue" name="venue" required>
+        <option value="">Loading venues…</option>
+      </select>
+      <div class="hint" id="venue-hint">Seats and prices come from the venue's seating plan.</div>
+      <div class="field-error" data-error-for="venue"></div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="event_date">Date</label>
+        <input id="event_date" name="event_date" type="date" required>
+        <div class="field-error" data-error-for="event_date"></div>
+      </div>
+      <div class="field">
+        <label for="event_time">Kick-off time</label>
+        <input id="event_time" name="event_time" type="time" required>
+        <div class="field-error" data-error-for="event_time"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="description">Description <span class="muted">(optional)</span></label>
+      <textarea id="description" name="description" rows="3" placeholder="e.g. Kenyan Premier League, matchday 12"></textarea>
+      <div class="field-error" data-error-for="description"></div>
+    </div>
+
+    <div class="field" id="status-field" hidden>
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="upcoming">Upcoming (booking open)</option>
+        <option value="ongoing">Happening now</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <div class="hint" id="status-hint">Only upcoming events can be booked.</div>
+      <div class="field-error" data-error-for="status"></div>
+    </div>
+
+    <button class="btn btn-block" type="submit" id="save-btn">{% if pk %}Save changes{% else %}Create event{% endif %}</button>
+  </form>
+</div>
+{% endblock %}

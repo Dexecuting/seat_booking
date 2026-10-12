@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My events{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/organizer-events.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<div class="page-head organizer-head">
+  <div>
+    <h1>My events</h1>
+    <p>Events you organise. Fans can book seats for upcoming events straight away.</p>
+  </div>
+  <a class="btn" href="/organizer/events/new/" id="new-event-btn">+ New event</a>
+</div>
+
+<div class="alert alert-error" id="organizer-denied" hidden>
+  This page is for event organizers. Ask an administrator to make your account an organizer.
+</div>
+<div class="alert alert-success" id="saved-note" role="status" hidden></div>
+
+<div id="my-events" aria-live="polite">
+  <div class="state"><div class="spinner"></div>Loading your events…</div>
+</div>
+{% endblock %}

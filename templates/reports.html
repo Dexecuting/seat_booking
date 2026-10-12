@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Reports{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/reports.js' %}" defer></script>{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Reports</h1>
+  <p>Sales, attendance and seat popularity for your events.</p>
+</div>
+
+<div class="alert alert-error" id="reports-denied" hidden>
+  Reports are available to event organizers and administrators.
+</div>
+
+<form class="report-filters" id="report-filters" aria-label="Report filters">
+  <label>
+    <span>Sales period</span>
+    <select name="days" id="filter-days">
+      <option value="7">Last 7 days</option>
+      <option value="30" selected>Last 30 days</option>
+      <option value="90">Last 90 days</option>
+      <option value="365">Last 12 months</option>
+      <option value="all">All time</option>
+    </select>
+  </label>
+  <label>
+    <span>Venue</span>
+    <select name="venue" id="filter-venue">
+      <option value="">All venues</option>
+    </select>
+  </label>
+  <span class="filter-note muted" id="filter-note"></span>
+</form>
+
+<div id="report" class="report" aria-live="polite">
+  <div class="state"><div class="spinner"></div>Loading reports…</div>
+</div>
+{% endblock %}

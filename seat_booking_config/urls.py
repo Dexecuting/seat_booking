@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/payments/', include('payments.urls')),
     path('api/tickets/', include('tickets.urls')),
     path('api/gates/', include('gates.urls')),
+    path('api/reports/', include('reports.urls')),
 
     # Frontend pages
     path('', RedirectView.as_view(url='/events/', permanent=False)),
@@ -30,4 +31,8 @@ urlpatterns = [
     path('tickets/', page('tickets/list.html'), name='tickets'),
     path('tickets/<int:pk>/', page('tickets/detail.html'), name='ticket-detail'),
     path('gate/', page('gate.html'), name='gate'),
+    path('reports/', page('reports.html'), name='reports'),
+    path('organizer/events/', page('organizer/events.html'), name='organizer-events'),
+    path('organizer/events/new/', page('organizer/event_form.html'), name='organizer-event-new'),
+    path('organizer/events/<int:pk>/edit/', page('organizer/event_form.html'), name='organizer-event-edit'),
 ]
