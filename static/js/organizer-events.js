@@ -153,7 +153,7 @@
       form.elements.event_time.value = event.event_time.slice(0, 5);
       form.elements.status.value = event.status;
       document.getElementById('status-field').hidden = false;
-      document.title = `Edit ${event.title} · KenyaSeats`;
+      document.title = `Edit ${event.title} · ${SB.siteName}`;
 
       form.elements.status.addEventListener('change', () => {
         document.getElementById('status-hint').textContent = form.elements.status.value === 'cancelled'

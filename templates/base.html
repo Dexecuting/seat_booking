@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Seat Booking{% endblock %} · KenyaSeats</title>
+  <title>{% block title %}Home{% endblock %} · {{ site_name }}</title>
+  <meta name="application-name" content="{{ site_name }}">
   <meta name="description" content="Book specific seats for sports events in Kenya, pay with M-Pesa and enter with a QR ticket.">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <script src="{% static 'js/api.js' %}" defer></script>
@@ -16,7 +17,7 @@
     <div class="container header-inner">
       <a class="brand" href="/">
         <span class="brand-mark" aria-hidden="true"></span>
-        KenyaSeats
+        {{ site_name }}
       </a>
 
       <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">
@@ -47,7 +48,7 @@
 
   <footer class="site-footer">
     <div class="container">
-      KenyaSeats &middot; Pick your seat, pay with M-Pesa, scan in at the gate.
+      {{ site_name }} &middot; Pick your seat, pay with M-Pesa, scan in at the gate.
     </div>
   </footer>
 </body>

@@ -186,7 +186,7 @@
       ),
       h('div', { class: 'selection-bar', id: 'selection-bar', hidden: true }),
     );
-    document.title = `${event.title} · KenyaSeats`;
+    document.title = `${event.title} · ${SB.siteName}`;
 
     map = SB.seatMap.create(document.getElementById('seat-map'), seats.seats, {
       onSelect(seat) {

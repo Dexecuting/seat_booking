@@ -174,7 +174,7 @@
         h('a', { class: 'pass-link', href: `/events/${ticket.event}/` }, 'View event & seating plan'),
       ),
     ));
-    document.title = `Ticket #${ticket.id} · KenyaSeats`;
+    document.title = `Ticket #${ticket.id} · ${SB.siteName}`;
   }
 
   document.addEventListener('DOMContentLoaded', () => {

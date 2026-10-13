@@ -85,6 +85,7 @@ TEMPLATES = [
                 'django.template.context_processors.media',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'seat_booking_config.context_processors.site',
             ],
         },
     },
@@ -211,6 +212,8 @@ SIMPLE_JWT = {
 AUTH_USER_MODEL = 'users.User'
 
 # Seat booking
+# Name shown in the page header, footer and browser tab. Change it in .env.
+SITE_NAME = config('SITE_NAME', default='Seat Booking')
 SEAT_HOLD_DURATION_MINUTES = config('SEAT_HOLD_DURATION_MINUTES', default=10, cast=int)
 
 # M-Pesa Daraja (STK Push). Sandbox credentials: https://developer.safaricom.co.ke

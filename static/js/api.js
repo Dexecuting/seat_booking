@@ -252,5 +252,8 @@
     }
   });
 
-  window.SB = { api, auth, h, fmt, ApiError };
+  /** Site name from <meta name="application-name"> (set by SITE_NAME), for page titles. */
+  const siteName = (document.querySelector('meta[name="application-name"]') || {}).content || 'Seat Booking';
+
+  window.SB = { api, auth, h, fmt, ApiError, siteName };
 })();
