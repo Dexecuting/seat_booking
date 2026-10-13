@@ -8,6 +8,7 @@ BBIT 4 - IS Project II - Strathmore University
 from pathlib import Path
 import os
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,12 +17,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# In production, load from environment variable
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-3w@%_20w%tf#c=n4l%v3r87pkbpt78**yjld@zq-u)t1+nd&z-')
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=True, cast=bool)
+# Off unless .env says DEBUG=True, so a server with a missing .env fails safe.
+DEBUG = config('DEBUG', default=False, cast=bool)
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# The fallback key is public (it is in the git history), so it is only allowed while debugging.
+SECRET_KEY = config('SECRET_KEY', default='')
+if not SECRET_KEY or SECRET_KEY.startswith('django-insecure'):
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            'Set a real SECRET_KEY in .env for production, e.g. the output of: '
+            'python -c "from django.core.management.utils import get_random_secret_key as k; print(k())"')
+    SECRET_KEY = SECRET_KEY or 'django-insecure-development-only-key'
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 
@@ -107,8 +115,10 @@ if config('USE_POSTGRESQL', default=False, cast=bool):
             'PASSWORD': config('DB_PASSWORD', default=''),
             'HOST': config('DB_HOST', default='localhost'),
             'PORT': config('DB_PORT', default='5432'),
-            'ATOMIC_REQUESTS': True,  # Ensure atomic transactions for seat hold mechanism
-            'CONN_MAX_AGE': 600,  # Connection pooling
+            # No ATOMIC_REQUESTS: the booking/payment services manage their own transactions
+            # (and are tested that way); wrapping whole requests would change their behaviour.
+            'CONN_MAX_AGE': 600,         # reuse connections for 10 minutes
+            'CONN_HEALTH_CHECKS': True,  # ...but drop ones the server has closed
         }
     }
 else:
@@ -159,6 +169,15 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
+
+# In production WhiteNoise serves compressed static files with content-hashed names
+# (style.3f2a1c.css), so browsers can cache them forever and still get updates.
+# Run `python manage.py collectstatic` when deploying.
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage' if DEBUG
+                    else 'whitenoise.storage.CompressedManifestStaticFilesStorage'},
+}
 
 # Media files (User uploads)
 MEDIA_URL = '/media/'
@@ -233,19 +252,23 @@ DARAJA_CALLBACK_TOKEN = config('DARAJA_CALLBACK_TOKEN', default='')
 # real price). Set to 0 to charge the full price.
 DARAJA_TEST_AMOUNT = config('DARAJA_TEST_AMOUNT', default=1 if DARAJA_ENV == 'sandbox' else 0, cast=int)
 
-# Security Settings
+# Security Settings (production)
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # Hosting platforms terminate HTTPS at their proxy and pass this header on;
+    # set BEHIND_HTTPS_PROXY=False only if Django itself receives HTTPS directly.
+    if config('BEHIND_HTTPS_PROXY', default=True, cast=bool):
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_SECURITY_POLICY = {
-        'default-src': ("'self'",),
-        'script-src': ("'self'", "'unsafe-inline'"),
-        'style-src': ("'self'", "'unsafe-inline'"),
-    }
+    # Tell browsers to use HTTPS only. Start small; raise to 31536000 (1 year) once HTTPS is stable.
+    SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=3600, cast=int)
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'same-origin'
+    X_FRAME_OPTIONS = 'DENY'
 
 # Logging Configuration
+(BASE_DIR / 'logs').mkdir(exist_ok=True)  # a fresh server has no logs/ folder yet
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

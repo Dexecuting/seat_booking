@@ -4,7 +4,7 @@ djangorestframework==3.14.0
 django-cors-headers==4.0.0
 
 # Database
-psycopg2-binary==2.9.6
+psycopg2-binary==2.9.10
 
 # Environment Variables
 python-decouple==3.8
