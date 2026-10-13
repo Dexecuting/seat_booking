@@ -438,7 +438,7 @@ This project is part of Strathmore University's BBIT 4 IS Project II.
 ## Support
 
 For issues or questions:
-- **Email**: denzel.machuki@strathmore.ac.ke
+- **Email**: denzel.ngare@strathmore.edu
 - **Supervisor**: Mr. Patrick Shabaya
 
 ## Project Links
