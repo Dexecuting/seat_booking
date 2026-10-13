@@ -19,6 +19,7 @@ from . import daraja
 from .models import Payment
 
 DARAJA_SETTINGS = dict(
+    DARAJA_TEST_AMOUNT=0,
     DARAJA_CONSUMER_KEY='key', DARAJA_CONSUMER_SECRET='secret',
     DARAJA_BUSINESS_SHORTCODE='174379', DARAJA_PASSKEY='passkey',
     DARAJA_CALLBACK_BASE_URL='https://example.ngrok-free.app', DARAJA_CALLBACK_TOKEN='s3cret',
@@ -217,3 +218,74 @@ class DarajaClientTests(APITestCase):
     def test_missing_credentials_raise_clear_error(self):
         with self.assertRaisesMessage(daraja.DarajaError, 'not configured'):
             daraja.get_access_token()
+
+
+@override_settings(**DARAJA_SETTINGS)
+class ResultOrderingTests(APITestCase):
+    """Regression tests for a real sandbox run: a 'still processing' status reply was treated as a
+    failure, and the success callback that followed was then ignored - the fan paid but got no ticket."""
+
+    @classmethod
+    def setUpTestData(cls):
+        venue = Venue.objects.create(name='Kasarani', location='Nairobi', capacity=1)
+        category = SeatCategory.objects.create(venue=venue, name='Student', price=Decimal('300'))
+        cls.seat = Seat.objects.create(venue=venue, row_number=20, seat_number=1, category=category)
+        cls.event = Event.objects.create(title='Match', venue=venue,
+                                         event_date=date.today() + timedelta(days=7), event_time=time(15))
+        cls.fan = User.objects.create_user(username='fan', password='x', phone='254712345678')
+
+    def setUp(self):
+        # Patch in setUp too (a class-level patch only covers test_* methods): tests must never call Safaricom.
+        patcher = mock.patch('payments.daraja.stk_push', return_value=STK_ACCEPTED)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.client.force_authenticate(self.fan)
+        self.booking = hold_seat(self.fan, self.event, self.seat)
+        self.payment_id = self.client.post('/api/payments/', {'booking': self.booking.id}).data['id']
+
+    def refresh_with(self, query_result):
+        with mock.patch('payments.daraja.stk_query', return_value=query_result):
+            return self.client.post(f'/api/payments/{self.payment_id}/refresh/').data
+
+    def test_still_processing_query_leaves_payment_pending(self):
+        for code in ('4999', 4999, '500.001.1001', ''):
+            data = self.refresh_with({'ResultCode': code, 'ResultDesc': 'The transaction is still under processing'})
+            self.assertEqual(data['status'], 'pending', f'code {code!r}')
+
+    def test_real_failure_from_query_marks_failed(self):
+        self.assertEqual(self.refresh_with({'ResultCode': '1032', 'ResultDesc': 'Request cancelled by user'})['status'], 'failed')
+
+    def test_success_callback_after_failed_still_confirms_booking(self):
+        self.refresh_with({'ResultCode': '1037', 'ResultDesc': 'DS timeout user cannot be reached'})
+        self.assertEqual(Payment.objects.get().status, 'failed')
+
+        self.client.force_authenticate(None)
+        self.client.post('/api/payments/mpesa/callback/s3cret/', callback_payload(receipt='SANDBOX123'), format='json')
+
+        payment = Payment.objects.get()
+        self.booking.refresh_from_db()
+        self.assertEqual((payment.status, payment.mpesa_reference), ('completed', 'SANDBOX123'))
+        self.assertEqual(self.booking.status, 'confirmed')
+        self.assertTrue(Ticket.objects.filter(booking=self.booking).exists())
+
+    def test_failure_after_success_changes_nothing(self):
+        self.client.force_authenticate(None)
+        self.client.post('/api/payments/mpesa/callback/s3cret/', callback_payload(), format='json')
+        self.client.post('/api/payments/mpesa/callback/s3cret/', callback_payload(result_code=1032), format='json')
+        self.assertEqual(Payment.objects.get().status, 'completed')
+
+
+@override_settings(**{**DARAJA_SETTINGS, 'DARAJA_TEST_AMOUNT': 1})
+class TestAmountTests(APITestCase):
+    def test_sandbox_charges_test_amount_but_records_real_price(self):
+        venue = Venue.objects.create(name='V', location='Nairobi', capacity=1)
+        cat = SeatCategory.objects.create(venue=venue, name='VIP', price=Decimal('3000'))
+        seat = Seat.objects.create(venue=venue, row_number=1, seat_number=1, category=cat)
+        event = Event.objects.create(title='M', venue=venue, event_date=date.today() + timedelta(days=3), event_time=time(15))
+        fan = User.objects.create_user(username='f', password='x', phone='254712345678')
+        booking = hold_seat(fan, event, seat)
+        self.client.force_authenticate(fan)
+        with mock.patch('payments.daraja.stk_push', return_value=STK_ACCEPTED) as stk_push:
+            res = self.client.post('/api/payments/', {'booking': booking.id})
+        self.assertEqual(stk_push.call_args.kwargs['amount'], 1)
+        self.assertEqual(res.data['amount'], '3000.00')

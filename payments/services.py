@@ -9,6 +9,8 @@ Payment flow:
 """
 import logging
 
+from django.conf import settings
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -19,6 +21,10 @@ from . import daraja
 from .models import Payment
 
 logger = logging.getLogger(__name__)
+
+
+# Daraja STK query result codes meaning "no final answer yet" - not a failure.
+STILL_PROCESSING_CODES = {'4999', '500.001.1001'}
 
 
 class PaymentError(Exception):
@@ -33,16 +39,19 @@ def start_payment(booking, phone):
                            'Complete it or wait for it to time out.')
 
     amount = booking.seat.category.price
+    charge = settings.DARAJA_TEST_AMOUNT or amount  # small fixed charge while testing (see settings)
     try:
         res = daraja.stk_push(
             phone=phone,
-            amount=amount,
+            amount=charge,
             account_reference=f'BK{booking.id}',
             description='Seat booking',
         )
     except daraja.DarajaError as exc:
         raise PaymentError(str(exc)) from exc
 
+    logger.info('STK push sent: booking %s, ticket price KES %s, charged KES %s, CheckoutRequestID %s',
+                booking.id, amount, charge, res.get('CheckoutRequestID'))
     return Payment.objects.create(
         booking=booking,
         amount=amount,
@@ -55,7 +64,9 @@ def start_payment(booking, phone):
 def apply_result(checkout_request_id, result_code, result_desc, receipt=''):
     """
     Record the outcome of an STK Push. Safe to call more than once for the same payment
-    (Safaricom may retry callbacks); only the first result for a pending payment is applied.
+    (Safaricom may retry callbacks): once a payment is completed (or refund_due) nothing changes.
+    A success always wins over an earlier 'failed', because the money really arrived - e.g. a
+    status query guessed wrong and the real callback came in afterwards.
     Returns the Payment, or None if the checkout ID is unknown.
     """
     with transaction.atomic():
@@ -64,12 +75,18 @@ def apply_result(checkout_request_id, result_code, result_desc, receipt=''):
         if payment is None:
             logger.warning('M-Pesa result for unknown CheckoutRequestID %s', checkout_request_id)
             return None
-        if payment.status != 'pending':
+        succeeded = str(result_code) == '0'
+        if payment.status in ('completed', 'refund_due'):
             return payment
+        if payment.status == 'failed':
+            if not succeeded:
+                return payment
+            logger.warning('Payment %s was marked failed but M-Pesa now reports success (%s) - applying it',
+                           payment.id, receipt or 'no receipt')
 
         payment.result_code = str(result_code)
         payment.result_desc = (result_desc or '')[:255]
-        if str(result_code) != '0':
+        if not succeeded:
             payment.status = 'failed'
             payment.save()
             return payment
@@ -113,4 +130,8 @@ def refresh_from_daraja(payment):
         res = daraja.stk_query(payment.checkout_request_id)
     except daraja.DarajaError:
         return payment  # still being processed, or Daraja unavailable - try again later
-    return apply_result(payment.checkout_request_id, res.get('ResultCode'), res.get('ResultDesc', ''))
+    code = str(res.get('ResultCode', '')).strip()
+    logger.info('STK query for payment %s: %s %s', payment.id, code, res.get('ResultDesc', ''))
+    if not code or code in STILL_PROCESSING_CODES:
+        return payment  # no final answer yet (e.g. 4999 "still under processing")
+    return apply_result(payment.checkout_request_id, code, res.get('ResultDesc', ''))

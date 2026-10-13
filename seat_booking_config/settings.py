@@ -228,6 +228,10 @@ DARAJA_PASSKEY = config('DARAJA_PASSKEY', default='')
 DARAJA_CALLBACK_BASE_URL = config('DARAJA_CALLBACK_BASE_URL', default='')
 # Secret path segment so only Safaricom (who is given the full URL) can post payment results.
 DARAJA_CALLBACK_TOKEN = config('DARAJA_CALLBACK_TOKEN', default='')
+# Amount actually sent to M-Pesa per payment while testing. The sandbox can debit a real phone's
+# M-Pesa, so by default it charges KES 1 whatever the ticket price (the booking still records the
+# real price). Set to 0 to charge the full price.
+DARAJA_TEST_AMOUNT = config('DARAJA_TEST_AMOUNT', default=1 if DARAJA_ENV == 'sandbox' else 0, cast=int)
 
 # Security Settings
 if not DEBUG:
@@ -277,10 +281,24 @@ LOGGING = {
             'backupCount': 5,
             'formatter': 'verbose',
         },
+        # Every M-Pesa request/callback, kept as an audit trail for reconciling payments.
+        'payments_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'payments.log',
+            'maxBytes': 1024 * 1024 * 10,
+            'backupCount': 10,
+            'formatter': 'simple',
+        },
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'payments': {
+            'handlers': ['console', 'payments_file'],
             'level': 'INFO',
             'propagate': False,
         },
