@@ -443,12 +443,12 @@ For issues or questions:
 
 ## Project Links
 
-- **GitHub**: https://github.com/yourusername/seat_booking
+- **GitHub**: https://github.com/Dexecuting/seat_booking
 - **Documentation**: See `/docs` folder
 - **Issue Tracker**: GitHub Issues
 
 ---
 
-**Last Updated**: January 2025  
+**Last Updated**: October 2026  
 **Status**: In Development (Chapter 5: Implementation)  
 **Current Phase**: Django Setup & Database Configuration
