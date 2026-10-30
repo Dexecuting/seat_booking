@@ -322,10 +322,15 @@
 
     const rowsMap = new Map();
     for (const s of hm.seats) {
-      if (!rowsMap.has(s.row)) rowsMap.set(s.row, []);
-      rowsMap.get(s.row).push(s);
+      const key = `${s.stand}|${s.row}`;
+      if (!rowsMap.has(key)) rowsMap.set(key, []);
+      rowsMap.get(key).push(s);
     }
-    const rows = [...rowsMap.keys()].sort((a, b) => a - b).map((r) => rowsMap.get(r).sort((a, b) => a.number - b.number));
+    // One line per stand and row, with sections side by side.
+    const rows = [...rowsMap.values()]
+      .sort((a, b) => a[0].stand.localeCompare(b[0].stand) || a[0].row - b[0].row)
+      .map((row) => row.sort((a, b) => a.section_order - b.section_order || a.number - b.number));
+    const rowName = (s) => (s.stand ? `${s.stand.charAt(0).toUpperCase()}${s.row}` : s.row);
     const maxCols = Math.max(...rows.map((r) => r.length));
     const CELL = 16, STEP = 18, LABEL = 26, PITCH = 30, GAP = 14;
     const W = LABEL * 2 + maxCols * STEP, H = PITCH + GAP + rows.length * STEP;
@@ -344,7 +349,7 @@
     rows.forEach((row, i) => {
       const yy = PITCH + GAP + i * STEP;
       const offset = ((maxCols - row.length) * STEP) / 2;
-      chart.append(svg('text', { class: 'tick', x: LABEL / 2, y: yy + CELL - 3, 'text-anchor': 'middle' }, row[0].row));
+      chart.append(svg('text', { class: 'tick', x: LABEL / 2, y: yy + CELL - 3, 'text-anchor': 'middle' }, rowName(row[0])));
       row.forEach((s, j) => {
         const x = LABEL + offset + j * STEP;
         const cell = svg('rect', { class: 'hm-cell', x, y: yy, width: CELL, height: CELL, rx: 3, fill: HEAT[heatBin(s.rate)] });
@@ -352,7 +357,7 @@
           cell.classList.add('active');
           const scale = wrap.querySelector('svg').getBoundingClientRect().width / W;
           tip.show((x + CELL / 2) * scale, yy * scale,
-            `${Math.round(s.rate * 100)}%`, `Row ${s.row}, Seat ${s.number} · ${s.category}`,
+            `${Math.round(s.rate * 100)}%`, `${fmt.seat(s)} · ${s.category}`,
             `Sold for ${s.sold} of ${hm.events_with_sales} match${hm.events_with_sales === 1 ? '' : 'es'}`);
         });
         cell.addEventListener('pointerleave', () => { cell.classList.remove('active'); tip.hide(); });
@@ -366,7 +371,7 @@
     const rowTable = rows.map((row) => {
       const avg = row.reduce((s, x) => s + x.rate, 0) / row.length;
       const best = row.reduce((b, x) => (x.rate > b.rate ? x : b), row[0]);
-      return [`Row ${row[0].row}`, row[0].category, `${Math.round(avg * 100)}%`,
+      return [row[0].stand ? `${row[0].stand} side, row ${row[0].row}` : `Row ${row[0].row}`, row[0].category, `${Math.round(avg * 100)}%`,
         best.rate > 0 ? `Seat ${best.number} (${Math.round(best.rate * 100)}%)` : '—'];
     });
 

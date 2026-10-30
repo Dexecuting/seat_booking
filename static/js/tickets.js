@@ -53,7 +53,7 @@
       h('div', { class: 'ticket-info' },
         h('div', { class: 'ticket-title' }, ticket.event_title),
         h('div', { class: 'muted' }, `${fmt.date(ticket.event_date)} · ${fmt.time(ticket.event_time)} · ${ticket.venue}`),
-        h('div', { class: 'ticket-seat' }, `Row ${ticket.row}, Seat ${ticket.seat_number} · ${ticket.category}`),
+        h('div', { class: 'ticket-seat' }, `${fmt.seat(ticket)} · ${ticket.category}`),
       ),
       h('div', { class: 'ticket-side' },
         statusBadge(ticket, isPast),
@@ -68,7 +68,7 @@
       if (!holds.length) return;
       document.getElementById('pending-holds').replaceChildren(...holds.map((b) =>
         h('div', { class: 'alert alert-info hold-alert' },
-          h('span', {}, `Unpaid: ${b.event_title}, Row ${b.row} Seat ${b.seat_number}. `),
+          h('span', {}, `Unpaid: ${b.event_title}, ${fmt.seat(b)}. `),
           h('a', { href: `/checkout/${b.id}/` }, 'Complete payment →'),
         )));
     } catch (e) { /* not essential */ }
@@ -163,6 +163,7 @@
           ? 'Show this code at the gate. Turn your screen brightness up for faster scanning.'
           : ticket.is_used ? `${usedAtText(ticket)}. This ticket can't be used again.` : 'This event has passed.'),
       h('dl', { class: 'pass-details' },
+        ticket.section ? h('div', {}, h('dt', {}, 'Section'), h('dd', {}, ticket.section)) : null,
         h('div', {}, h('dt', {}, 'Row'), h('dd', {}, ticket.row)),
         h('div', {}, h('dt', {}, 'Seat'), h('dd', {}, ticket.seat_number)),
         h('div', {}, h('dt', {}, 'Category'), h('dd', {}, ticket.category)),

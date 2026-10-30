@@ -3,7 +3,7 @@
 
 {% block title %}My tickets{% endblock %}
 
-{% block scripts %}<script src="{% static 'js/tickets.js' %}" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/tickets.js' %}?v={{ asset_version }}" defer></script>{% endblock %}
 
 {% block content %}
 <div class="page-head">

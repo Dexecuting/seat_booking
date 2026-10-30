@@ -3,7 +3,7 @@
 
 {% block title %}{% if pk %}Edit event{% else %}New event{% endif %}{% endblock %}
 
-{% block scripts %}<script src="{% static 'js/organizer-events.js' %}" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/organizer-events.js' %}?v={{ asset_version }}" defer></script>{% endblock %}
 
 {% block content %}
 <a class="back-link" href="/organizer/events/">&larr; My events</a>

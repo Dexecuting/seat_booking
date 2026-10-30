@@ -24,8 +24,8 @@ class SeatCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Seat)
 class SeatAdmin(admin.ModelAdmin):
-    list_display = ('venue', 'row_number', 'seat_number', 'category')
-    list_filter = ('venue', 'category')
+    list_display = ('venue', 'stand', 'section', 'row_number', 'seat_number', 'category')
+    list_filter = ('venue', 'stand', 'section', 'category')
     search_fields = ('venue__name',)
-    ordering = ('venue', 'row_number', 'seat_number')
+    ordering = ('venue', 'stand', 'section_order', 'row_number', 'seat_number')
     list_select_related = ('venue', 'category')

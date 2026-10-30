@@ -3,7 +3,7 @@
 
 {% block title %}Gate scanner{% endblock %}
 
-{% block scripts %}<script src="{% static 'js/gate.js' %}" data-jsqr-src="{% static 'js/vendor/jsQR.js' %}" id="gate-script" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/gate.js' %}?v={{ asset_version }}" data-jsqr-src="{% static 'js/vendor/jsQR.js' %}?v={{ asset_version }}" id="gate-script" defer></script>{% endblock %}
 
 {% block content %}
 <div class="gate" id="gate">

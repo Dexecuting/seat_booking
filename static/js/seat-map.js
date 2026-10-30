@@ -6,8 +6,8 @@
  *   map.select(seatId);       // preselect (e.g. from ?seat= in the URL)
  *   map.setStatus(id, 'held');
  *
- * Layout: a top-down view of one stand. The pitch runs along the top; row 1 is nearest the
- * pitch. Available seats are coloured by price category; held/booked seats are greyed out.
+ * Layout: a top-down view, either one stand below a pitch or (when seats have a stand) two stands
+ * either side of a court; row 1 is always nearest the action. Available seats are coloured by price category; held/booked seats are greyed out.
  * Keyboard: Tab into the map, arrow keys move between seats, Enter/Space selects.
  */
 (function () {
@@ -21,6 +21,10 @@
   const LABEL = 30;      // room for row numbers on each side
   const PITCH_H = 64;
   const PITCH_GAP = 24;
+  const COURT_H = 170;    // court drawn between two stands
+  const COURT_GAP = 16;
+  const SECTION_GAP = 34; // aisle between sections of a stand
+  const STAND_LABEL = 26;
 
   const STATUS_TEXT = { available: 'available', held: 'on hold', booked: 'booked' };
 
@@ -59,11 +63,16 @@
     );
   }
 
-  function create(container, seatList, { onSelect = () => {} } = {}) {
-    const categories = categoriesOf(seatList);
-    const colorOf = new Map(categories.map((c) => [c.id, c.color]));
+  function rowLabels(root, y, row, xLeft, xRight) {
+    const labelY = y + STEP / 2 + 4;
+    root.append(
+      svg('text', { class: 'row-label', x: xLeft, y: labelY, 'text-anchor': 'middle' }, row),
+      svg('text', { class: 'row-label', x: xRight, y: labelY, 'text-anchor': 'middle' }, row),
+    );
+  }
 
-    // Group seats into rows (front row first), seats left to right.
+  /** One stand below a pitch: row 1 nearest the pitch, shorter rows centred. */
+  function gridLayout(seatList) {
     const rowMap = new Map();
     for (const seat of seatList) {
       if (!rowMap.has(seat.row)) rowMap.set(seat.row, []);
@@ -73,7 +82,130 @@
     const maxCols = Math.max(...rows.map((r) => r.length));
     const standWidth = maxCols * STEP;
     const width = LABEL * 2 + standWidth;
-    const height = PITCH_H + PITCH_GAP + rows.length * STEP + 4;
+    rows.forEach((row, i) => {
+      const offset = ((maxCols - row.length) * STEP) / 2;
+      row.forEach((seat, j) => {
+        const x = LABEL + offset + j * STEP;
+        Object.assign(seat, {
+          x,
+          y: PITCH_H + PITCH_GAP + i * STEP,
+          cx: x + STEP / 2,
+          // Position within the stand, 0..1, used for the view preview.
+          fx: (x + STEP / 2 - LABEL) / standWidth,
+          fy: rows.length > 1 ? i / (rows.length - 1) : 0,
+          totalRows: rows.length,
+        });
+      });
+    });
+    const decorate = (root) => {
+      const midX = LABEL + standWidth / 2;
+      root.append(
+        svg('rect', { class: 'pitch', x: LABEL, y: 0, width: standWidth, height: PITCH_H, rx: 6 }),
+        svg('line', { class: 'pitch-line', x1: midX, y1: 0, x2: midX, y2: PITCH_H }),
+        svg('circle', { class: 'pitch-line', cx: midX, cy: PITCH_H / 2, r: PITCH_H * 0.3 }),
+        svg('text', { class: 'pitch-label', x: LABEL + 12, y: PITCH_H / 2 + 4 }, 'PITCH'),
+      );
+      rows.forEach((row, i) => rowLabels(root, PITCH_H + PITCH_GAP + i * STEP, row[0].row, LABEL / 2, width - LABEL / 2));
+    };
+    return { rows, width, height: PITCH_H + PITCH_GAP + rows.length * STEP + 4, decorate };
+  }
+
+  /**
+   * Stands either side of a court, as seen from above: the first stand above the court and the
+   * second below it, each with row 1 nearest the court. Sections sit side by side in section_order.
+   */
+  function courtLayout(seatList) {
+    const standNames = [...new Set(seatList.map((s) => s.stand))].sort();
+    const stands = standNames.map((name) => {
+      const sections = new Map();
+      for (const seat of seatList.filter((s) => s.stand === name)) {
+        if (!sections.has(seat.section_order)) sections.set(seat.section_order, { name: seat.section, rows: new Map() });
+        const section = sections.get(seat.section_order);
+        if (!section.rows.has(seat.row)) section.rows.set(seat.row, []);
+        section.rows.get(seat.row).push({ ...seat });
+      }
+      const ordered = [...sections.keys()].sort((a, b) => a - b).map((k) => sections.get(k));
+      ordered.forEach((section) => {
+        section.width = Math.max(...[...section.rows.values()].map((r) => r.length)) * STEP;
+      });
+      const standWidth = ordered.reduce((sum, section) => sum + section.width, 0) + (ordered.length - 1) * SECTION_GAP;
+      return { name, sections: ordered, width: standWidth };
+    });
+
+    const maxWidth = Math.max(...stands.map((stand) => stand.width));
+    const width = LABEL * 2 + maxWidth;
+    const rowCount = (stand) => Math.max(...stand.sections.flatMap((section) => [...section.rows.keys()]));
+    const rows = [];
+    const marks = [];
+    let y = STAND_LABEL;
+
+    stands.forEach((stand, standIndex) => {
+      const count = rowCount(stand);
+      const nearCourtLast = standIndex === 0; // top stand: row 1 is its bottom line
+      const start = LABEL + (maxWidth - stand.width) / 2;
+      const rowNumbers = Array.from({ length: count }, (_, i) => (nearCourtLast ? count - i : i + 1));
+      const standTop = y;
+      rowNumbers.forEach((rowNumber, i) => {
+        const line = [];
+        let sectionX = start;
+        stand.sections.forEach((section) => {
+          const seats = (section.rows.get(rowNumber) || []).sort((a, b) => a.number - b.number);
+          const offset = (section.width - seats.length * STEP) / 2;
+          seats.forEach((seat, j) => {
+            const x = sectionX + offset + j * STEP;
+            Object.assign(seat, {
+              x,
+              y: standTop + i * STEP,
+              cx: x + STEP / 2,
+              fx: (x + STEP / 2 - LABEL) / maxWidth,
+              fy: count > 1 ? (rowNumber - 1) / (count - 1) : 0,
+              totalRows: count,
+            });
+            line.push(seat);
+          });
+          sectionX += section.width + SECTION_GAP;
+        });
+        rows.push(line);
+        marks.push({ y: standTop + i * STEP, row: rowNumber });
+      });
+      y = standTop + count * STEP;
+      if (standIndex === 0) y += COURT_H + COURT_GAP * 2;
+    });
+
+    const firstBottom = STAND_LABEL + rowCount(stands[0]) * STEP;
+    const courtY = firstBottom + COURT_GAP;
+    const height = y + (stands[1] ? STAND_LABEL : 4);
+    const standLabel = (stand) => `${stand.name.charAt(0).toUpperCase()}${stand.name.slice(1)} side`;
+
+    const decorate = (root) => {
+      const midX = LABEL + maxWidth / 2;
+      const midY = courtY + COURT_H / 2;
+      root.append(
+        svg('rect', { class: 'pitch', x: LABEL, y: courtY, width: maxWidth, height: COURT_H, rx: 6 }),
+        svg('line', { class: 'pitch-line', x1: midX, y1: courtY, x2: midX, y2: courtY + COURT_H }),
+        svg('circle', { class: 'pitch-line', cx: midX, cy: midY, r: COURT_H * 0.2 }),
+        svg('text', { class: 'pitch-label', x: LABEL + 12, y: midY + 4 }, 'COURT'),
+        svg('text', { class: 'stand-label', x: midX, y: 16, 'text-anchor': 'middle' }, standLabel(stands[0])),
+      );
+      marks.forEach((mark) => rowLabels(root, mark.y, mark.row, LABEL / 2, width - LABEL / 2));
+      if (stands[1]) {
+        const labelY = height - 8;
+        let sectionX = LABEL + (maxWidth - stands[1].width) / 2;
+        stands[1].sections.forEach((section) => {
+          root.append(svg('text', { class: 'stand-label', x: sectionX + section.width / 2, y: labelY, 'text-anchor': 'middle' }, section.name));
+          sectionX += section.width + SECTION_GAP;
+        });
+      }
+    };
+    return { rows, width, height, decorate };
+  }
+
+  function create(container, seatList, { onSelect = () => {} } = {}) {
+    const categories = categoriesOf(seatList);
+    const colorOf = new Map(categories.map((c) => [c.id, c.color]));
+
+    const hasStands = seatList.some((seat) => seat.stand);
+    const { rows, width, height, decorate } = hasStands ? courtLayout(seatList) : gridLayout(seatList);
 
     const seats = new Map(); // id -> seat (with layout info and element)
     let selectedId = null;
@@ -81,48 +213,21 @@
 
     const root = svg('svg', {
       viewBox: `0 0 ${width} ${height}`,
-      class: 'seat-map-svg',
+      class: hasStands ? 'seat-map-svg seat-map-court' : 'seat-map-svg',
       role: 'group',
       'aria-label': 'Seat map. Use arrow keys to move between seats and Enter to choose one.',
       // Keep seats tappable on phones: never shrink below ~16px per seat, scroll instead.
-      style: `min-width:${Math.round(width * 0.75)}px`,
+      style: hasStands ? null : `min-width:${Math.round(width * 0.75)}px`,
     });
-
-    // Pitch along the top, with the halfway line at the centre of the stand.
-    const pitchX = LABEL;
-    const midX = LABEL + standWidth / 2;
-    root.append(
-      svg('rect', { class: 'pitch', x: pitchX, y: 0, width: standWidth, height: PITCH_H, rx: 6 }),
-      svg('line', { class: 'pitch-line', x1: midX, y1: 0, x2: midX, y2: PITCH_H }),
-      svg('circle', { class: 'pitch-line', cx: midX, cy: PITCH_H / 2, r: PITCH_H * 0.3 }),
-      svg('text', { class: 'pitch-label', x: pitchX + 12, y: PITCH_H / 2 + 4 }, 'PITCH'),
-    );
+    decorate(root);
 
     rows.forEach((row, i) => {
-      const y = PITCH_H + PITCH_GAP + i * STEP;
-      const offset = ((maxCols - row.length) * STEP) / 2; // centre shorter rows
-      const labelY = y + STEP / 2 + 4;
-      root.append(
-        svg('text', { class: 'row-label', x: LABEL / 2, y: labelY, 'text-anchor': 'middle' }, row[0].row),
-        svg('text', { class: 'row-label', x: width - LABEL / 2, y: labelY, 'text-anchor': 'middle' }, row[0].row),
-      );
-
       row.forEach((seat, j) => {
-        const x = LABEL + offset + j * STEP;
-        Object.assign(seat, {
-          rowIndex: i,
-          colIndex: j,
-          cx: x + STEP / 2,
-          // Position within the stand, 0..1, used for the view preview.
-          fx: (x + STEP / 2 - LABEL) / standWidth,
-          fy: rows.length > 1 ? i / (rows.length - 1) : 0,
-          totalRows: rows.length,
-          color: colorOf.get(seat.category_id),
-        });
+        Object.assign(seat, { rowIndex: i, colIndex: j, color: colorOf.get(seat.category_id) });
         seat.el = svg('rect', {
           class: 'seat',
-          x: x + (STEP - SEAT) / 2,
-          y: y + (STEP - SEAT) / 2,
+          x: seat.x + (STEP - SEAT) / 2,
+          y: seat.y + (STEP - SEAT) / 2,
           width: SEAT,
           height: SEAT,
           rx: 4,
@@ -139,7 +244,7 @@
 
     function label(seat) {
       const state = seat.id === selectedId ? 'selected' : STATUS_TEXT[seat.status] || seat.status;
-      return `Row ${seat.row}, seat ${seat.number}, ${seat.category}, ${fmt.kes(seat.price)}, ${state}`;
+      return `${fmt.seat(seat)}, ${seat.category}, ${fmt.kes(seat.price)}, ${state}`;
     }
 
     function applyStatus(seat) {
@@ -256,11 +361,33 @@
     };
   }
 
+  /** The real photo taken from this seat; tap to see it full size. */
+  function photoPreview(seat, categoryDescription) {
+    const alt = `View of the court from ${fmt.seat(seat)}`;
+    const enlarge = () => {
+      const dialog = h('dialog', { class: 'photo-dialog', onclose: () => dialog.remove() },
+        h('img', { src: seat.view_photo, alt }),
+        h('button', { class: 'btn btn-small', type: 'button', onclick: () => dialog.close() }, 'Close'));
+      document.body.append(dialog);
+      dialog.showModal();
+    };
+    return h('div', { class: 'view-box' },
+      h('button', { class: 'view-photo-btn', type: 'button', onclick: enlarge, 'aria-label': `Enlarge: ${alt}` },
+        h('img', { class: 'view-photo', src: seat.view_photo, alt, width: 720, height: 1600 }),
+        h('span', { class: 'view-photo-hint' }, 'Tap to enlarge')),
+      h('ul', { class: 'view-notes' },
+        h('li', {}, 'Real photo taken from this seat.'),
+        categoryDescription ? h('li', {}, categoryDescription) : null,
+      ),
+    );
+  }
+
   /**
    * "View from your seat": a mini top-down diagram with the sightline to the pitch, plus a
    * plain-language description derived from the seat's row depth and position along the stand.
    */
   function viewPreview(seat, categoryDescription) {
+    if (seat.view_photo) return photoPreview(seat, categoryDescription);
     const W = 200, PITCH_TOP = 8, PITCH_BOTTOM = 78, STAND_TOP = 88, STAND_BOTTOM = 128;
     const x = 10 + 180 * seat.fx;
     const y = STAND_TOP + 4 + (STAND_BOTTOM - STAND_TOP - 8) * seat.fy;

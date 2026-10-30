@@ -6,8 +6,8 @@
   <title>{% block title %}Home{% endblock %} · {{ site_name }}</title>
   <meta name="application-name" content="{{ site_name }}">
   <meta name="description" content="Book specific seats for sports events in Kenya, pay with M-Pesa and enter with a QR ticket.">
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <script src="{% static 'js/api.js' %}" defer></script>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ asset_version }}">
+  <script src="{% static 'js/api.js' %}?v={{ asset_version }}" defer></script>
   {% block scripts %}{% endblock %}
 </head>
 <body>

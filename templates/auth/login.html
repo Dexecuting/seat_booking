@@ -3,7 +3,7 @@
 
 {% block title %}Log in{% endblock %}
 
-{% block scripts %}<script src="{% static 'js/auth.js' %}" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/auth.js' %}?v={{ asset_version }}" defer></script>{% endblock %}
 
 {% block content %}
 <div class="form-card">

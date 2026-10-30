@@ -3,7 +3,7 @@
 
 {% block title %}My events{% endblock %}
 
-{% block scripts %}<script src="{% static 'js/organizer-events.js' %}" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/organizer-events.js' %}?v={{ asset_version }}" defer></script>{% endblock %}
 
 {% block content %}
 <div class="page-head organizer-head">

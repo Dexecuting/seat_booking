@@ -211,6 +211,11 @@
     time(isoTime) {
       return isoTime.slice(0, 5);
     },
+    /** A seat's full name, e.g. 'Foldable red, Row 2, Seat 5' or 'Row 2, Seat 5'. */
+    seat(s) {
+      const number = s.number !== undefined ? s.number : s.seat_number;
+      return `${s.section ? `${s.section}, ` : ''}Row ${s.row}, Seat ${number}`;
+    },
     statusLabel(status) {
       return status.charAt(0).toUpperCase() + status.slice(1);
     },

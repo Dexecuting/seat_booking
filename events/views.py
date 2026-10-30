@@ -56,7 +56,7 @@ class EventViewSet(viewsets.ModelViewSet):
         """
         event = self.get_object()
         statuses = get_seat_statuses(event)
-        seats = event.venue.seats.select_related('category').order_by('row_number', 'seat_number')
+        seats = event.venue.seats.select_related('category').order_by('stand', 'section_order', 'row_number', 'seat_number')
         for seat in seats:
             seat.status = statuses[seat.id]
         counts = Counter(statuses.values())

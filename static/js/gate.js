@@ -49,7 +49,7 @@
     document.getElementById('result-title').textContent = title;
     document.getElementById('result-reason').textContent = reason;
     document.getElementById('result-ticket').replaceChildren(...(ticket ? [
-      h('div', { class: 'result-seat' }, `Row ${ticket.row} · Seat ${ticket.seat_number}`),
+      h('div', { class: 'result-seat' }, fmt.seat(ticket)),
       h('div', {}, `${ticket.category} · ${ticket.holder}`),
       h('div', { class: 'result-event' }, ticket.event),
     ] : []));
@@ -110,7 +110,7 @@
     if (result.allowed) {
       counts.allowed += 1;
       showResult('allowed', 'ALLOWED', 'Enjoy the match!', t);
-      addRecent('allowed', `Admitted · Row ${t.row} Seat ${t.seat_number} · ${t.holder}`);
+      addRecent('allowed', `Admitted · ${fmt.seat(t)} · ${t.holder}`);
     } else {
       counts.denied += 1;
       showResult('denied', 'DENIED', result.reason, t);

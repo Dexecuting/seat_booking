@@ -37,7 +37,7 @@ def send_ticket_email(ticket):
         f"Event:  {event.title}\n"
         f"Venue:  {event.venue.name}, {event.venue.location}\n"
         f"Date:   {event.event_date:%A %d %B %Y} at {event.event_time:%H:%M}\n"
-        f"Seat:   Row {seat.row_number}, Seat {seat.seat_number} ({seat.category.name})\n"
+        f"Seat:   {seat.label} ({seat.category.name})\n"
         f"Ticket: #{ticket.id}\n\n"
         f"The QR code can only be used once. Do not share it.\n"
     )

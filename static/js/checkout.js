@@ -42,7 +42,7 @@
       h('div', { class: 'muted' },
         `${fmt.date(booking.event_date)} · ${fmt.time(booking.event_time)} · ${booking.venue}`),
       h('dl', { class: 'summary-grid' },
-        h('div', {}, h('dt', {}, 'Seat'), h('dd', {}, `Row ${booking.row}, Seat ${booking.seat_number}`)),
+        h('div', {}, h('dt', {}, 'Seat'), h('dd', {}, fmt.seat(booking))),
         h('div', {}, h('dt', {}, 'Category'), h('dd', {}, booking.category)),
         h('div', {}, h('dt', {}, 'Total'), h('dd', { class: 'price' }, fmt.kes(booking.price))),
       ),

@@ -39,10 +39,21 @@ class Seat(models.Model):
     row_number = models.IntegerField()
     seat_number = models.IntegerField()
     category = models.ForeignKey(SeatCategory, on_delete=models.CASCADE)
+    # Layout for venues with stands either side of a court; blank for a simple single-stand grid.
+    stand = models.CharField(max_length=30, blank=True, help_text='Which stand the seat is in, e.g. first or second.')
+    section = models.CharField(max_length=60, blank=True, help_text='Named part of the stand, e.g. Foldable red.')
+    section_order = models.PositiveSmallIntegerField(default=0, help_text='Left-to-right order of sections on the map.')
+    view_photo = models.CharField(max_length=255, blank=True, help_text='Static file path of the photo taken from this seat.')
     
     class Meta:
         db_table = 'venues_seat'
-        unique_together = ('venue', 'row_number', 'seat_number')
+        unique_together = ('venue', 'stand', 'section', 'row_number', 'seat_number')
     
     def __str__(self):
-        return f"{self.venue.name} - Row {self.row_number}, Seat {self.seat_number}"
+        return f"{self.venue.name} - {self.label}"
+
+    @property
+    def label(self):
+        """How the seat is named to people, e.g. 'Foldable red, Row 2, Seat 5'."""
+        place = f'Row {self.row_number}, Seat {self.seat_number}'
+        return f'{self.section}, {place}' if self.section else place

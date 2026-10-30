@@ -141,12 +141,12 @@ def seat_heatmap(venue, start, end, organizer=None):
         sold = sold.filter(event__organizer=organizer)
     events_with_sales = sold.values('event').distinct().count()
     sold_per_seat = defaultdict(int, sold.values('seat').annotate(n=Count('id')).values_list('seat', 'n'))
-    seats = Seat.objects.filter(venue=venue).select_related('category').order_by('row_number', 'seat_number')
+    seats = Seat.objects.filter(venue=venue).select_related('category').order_by('stand', 'section_order', 'row_number', 'seat_number')
     return {
         'venue': {'id': venue.id, 'name': venue.name},
         'events_with_sales': events_with_sales,
         'seats': [{
-            'id': s.id, 'row': s.row_number, 'number': s.seat_number, 'category': s.category.name,
+            'id': s.id, 'stand': s.stand, 'section': s.section, 'section_order': s.section_order, 'row': s.row_number, 'number': s.seat_number, 'category': s.category.name,
             'sold': sold_per_seat[s.id],
             'rate': round(sold_per_seat[s.id] / events_with_sales, 3) if events_with_sales else 0,
         } for s in seats],

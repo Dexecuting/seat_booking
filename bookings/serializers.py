@@ -12,6 +12,7 @@ class BookingSerializer(serializers.ModelSerializer):
     event_date = serializers.DateField(source='event.event_date', read_only=True)
     event_time = serializers.TimeField(source='event.event_time', read_only=True)
     venue = serializers.CharField(source='event.venue.name', read_only=True)
+    section = serializers.CharField(source='seat.section', read_only=True)
     row = serializers.IntegerField(source='seat.row_number', read_only=True)
     seat_number = serializers.IntegerField(source='seat.seat_number', read_only=True)
     category = serializers.CharField(source='seat.category.name', read_only=True)
@@ -22,7 +23,7 @@ class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = ('id', 'status', 'event', 'event_title', 'event_date', 'event_time', 'venue',
-                  'seat', 'row', 'seat_number', 'category', 'price',
+                  'seat', 'section', 'row', 'seat_number', 'category', 'price',
                   'booking_date', 'hold_expires_at', 'hold_seconds_remaining')
         read_only_fields = fields
 

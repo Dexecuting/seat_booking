@@ -4,8 +4,8 @@
 {% block title %}Event{% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/seat-map.js' %}" defer></script>
-<script src="{% static 'js/event-detail.js' %}" defer></script>
+<script src="{% static 'js/seat-map.js' %}?v={{ asset_version }}" defer></script>
+<script src="{% static 'js/event-detail.js' %}?v={{ asset_version }}" defer></script>
 {% endblock %}
 
 {% block content %}

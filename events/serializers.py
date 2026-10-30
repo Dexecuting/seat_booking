@@ -1,3 +1,4 @@
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -44,3 +45,11 @@ class EventSeatSerializer(serializers.Serializer):
     category = serializers.CharField(source='category.name')
     price = serializers.DecimalField(source='category.price', max_digits=10, decimal_places=2)
     status = serializers.CharField()
+    stand = serializers.CharField()
+    section = serializers.CharField()
+    section_order = serializers.IntegerField()
+    view_photo = serializers.SerializerMethodField()
+
+    def get_view_photo(self, seat):
+        """URL of the real photo from this seat, or None if the venue has no photos."""
+        return staticfiles_storage.url(seat.view_photo) if seat.view_photo else None

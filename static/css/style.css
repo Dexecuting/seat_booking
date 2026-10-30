@@ -428,6 +428,7 @@ input[aria-invalid="true"] { border-color: var(--red); }
 .pitch-line { fill: none; stroke: rgba(255, 255, 255, .7); stroke-width: 1.5; }
 .pitch-label { fill: rgba(255, 255, 255, .9); font: 700 12px var(--font); letter-spacing: .2em; }
 .row-label { fill: var(--muted); font: 600 10px var(--font); }
+.stand-label { fill: var(--muted); font: 600 13px var(--font); }
 
 .seat {
   cursor: pointer;
@@ -453,7 +454,7 @@ input[aria-invalid="true"] { border-color: var(--red); }
   margin-bottom: 16px;
 }
 .selected-title { font-size: 1.15rem; font-weight: 700; }
-.selected-price { font-size: 1.25rem; }
+.selected-price { font-size: 1.25rem; white-space: nowrap; }
 
 .view-box { margin-bottom: 16px; }
 .view-preview { display: block; width: 100%; max-width: 320px; margin: 0 auto 8px; }
@@ -832,3 +833,26 @@ input[aria-invalid="true"] { border-color: var(--red); }
 .form-wide { max-width: 560px; }
 textarea { min-height: 88px; resize: vertical; }
 .list-foot { margin: 12px 0 0; }
+
+/* ---------- Seat view photo ---------- */
+
+.view-photo-btn { position: relative; display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; margin-bottom: 8px; }
+.view-photo { display: block; width: 100%; height: 300px; object-fit: cover; object-position: center 40%; border-radius: 8px; background: var(--line); }
+.view-photo-hint { position: absolute; right: 8px; bottom: 8px; padding: 2px 8px; border-radius: 6px; background: rgba(0, 0, 0, .6); color: #fff; font-size: .8rem; }
+.photo-dialog { padding: 12px; border: 0; border-radius: 10px; max-width: min(94vw, 480px); text-align: center; }
+.photo-dialog::backdrop { background: rgba(0, 0, 0, .75); }
+.photo-dialog img { display: block; max-width: 100%; max-height: 80vh; margin: 0 auto 10px; border-radius: 6px; }
+
+/* Court maps are wide: give them the full page, with the seat panel below. On touch screens seats
+   stay big enough to tap and the map scrolls inside its box. */
+.seat-map-court { min-width: 980px; }
+@media (pointer: coarse) { .seat-map-court { min-width: 1700px; } }
+.detail-grid.detail-wide { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .detail-wide .side-panels { grid-template-columns: 2fr 1fr; align-items: start; } }
+
+/* Seat photos are tall portraits: show the whole view rather than cropping it. */
+.view-photo { height: 440px; object-fit: contain; background: var(--bg); }
+/* The court map is drawn large and scaled down, so its text needs a larger base size. */
+.seat-map-court .stand-label { font-size: 24px; }
+.seat-map-court .row-label { font-size: 18px; }
+.seat-map-court .pitch-label { font-size: 22px; }

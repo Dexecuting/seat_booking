@@ -18,6 +18,7 @@ def scan_result_data(result):
             'id': result.ticket.id,
             'holder': booking.fan.get_full_name() or booking.fan.username,
             'event': booking.event.title,
+            'section': booking.seat.section,
             'row': booking.seat.row_number,
             'seat_number': booking.seat.seat_number,
             'category': booking.seat.category.name,

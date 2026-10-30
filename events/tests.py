@@ -155,3 +155,11 @@ class EventOwnershipTests(APITestCase):
         self.assertEqual(self.client.patch(f'/api/venues/{self.venue.id}/', {'name': 'X'}).status_code, 403)
         self.client.force_authenticate(self.admin)
         self.assertEqual(self.client.patch(f'/api/venues/{self.venue.id}/', {'name': 'Kasarani Stadium'}).status_code, 200)
+
+
+class AssetVersionTests(APITestCase):
+    def test_pages_stamp_script_and_style_urls(self):
+        with self.settings(DEBUG=True):
+            html = self.client.get('/events/').content.decode()
+        self.assertRegex(html, r'js/api\.js\?v=\d+"')
+        self.assertRegex(html, r'css/style\.css\?v=\d+"')

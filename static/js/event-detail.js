@@ -73,7 +73,7 @@
     panel.replaceChildren(
       h('div', { class: 'selected-seat' },
         h('div', {},
-          h('div', { class: 'selected-title' }, `Row ${seat.row} · Seat ${seat.number}`),
+          h('div', { class: 'selected-title' }, fmt.seat(seat)),
           h('div', { class: 'muted' }, seat.category),
         ),
         h('div', { class: 'price selected-price' }, fmt.kes(seat.price)),
@@ -87,7 +87,7 @@
     // Compact bar pinned to the bottom of the screen on phones.
     bar.replaceChildren(
       h('div', {},
-        h('strong', {}, `Row ${seat.row} · Seat ${seat.number}`),
+        h('strong', {}, fmt.seat(seat)),
         h('div', { class: 'muted' }, `${seat.category} · ${fmt.kes(seat.price)}`),
       ),
       holdButton(),
@@ -130,7 +130,7 @@
       if (!booking) return;
       const banner = document.getElementById('existing-hold');
       banner.replaceChildren(
-        h('span', {}, `You're holding Row ${booking.row}, Seat ${booking.seat_number}. `),
+        h('span', {}, `You're holding ${fmt.seat(booking)}. `),
         h('a', { href: `/checkout/${booking.id}/` }, 'Continue to payment →'),
       );
       banner.hidden = false;
@@ -166,7 +166,7 @@
     root.replaceChildren(
       hero(),
       h('div', { class: 'alert alert-info', id: 'existing-hold', hidden: true }),
-      h('div', { class: 'detail-grid' },
+      h('div', { class: seats.seats.some((s) => s.stand) ? 'detail-grid detail-wide' : 'detail-grid' },
         h('section', { class: 'panel', 'aria-labelledby': 'seat-map-title' },
           h('h2', { id: 'seat-map-title' }, bookable ? 'Choose your seat' : 'Seating plan'),
           bookable ? null : h('div', { class: 'alert alert-info' }, 'Booking is closed for this event.'),

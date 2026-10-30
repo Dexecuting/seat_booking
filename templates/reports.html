@@ -3,7 +3,7 @@
 
 {% block title %}Reports{% endblock %}
 
-{% block scripts %}<script src="{% static 'js/reports.js' %}" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/reports.js' %}?v={{ asset_version }}" defer></script>{% endblock %}
 
 {% block content %}
 <div class="page-head">
