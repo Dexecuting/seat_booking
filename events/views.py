@@ -1,14 +1,15 @@
 from collections import Counter
 
-from django.db.models import Min
+from django.db.models import Min, Q
 
 from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from bookings.models import Booking
 from bookings.services import get_seat_statuses
-from users.permissions import IsEventOwnerOrReadOnly, IsOrganizerOrReadOnly, is_admin
+from users.permissions import IsEventOwnerOrReadOnly, IsOrganizerOrReadOnly, is_admin, sees_all_events
 
 from .models import Event
 from .serializers import EventSeatSerializer, EventSerializer
@@ -18,7 +19,9 @@ class EventViewSet(viewsets.ModelViewSet):
     """
     /api/events/ - public list/detail. Organizers create events (they become the event's
     organizer) and can change only their own; admins can change any.
-    Filter with ?status=upcoming&venue=1, search with ?search=gor,
+    Fans and logged-out visitors get upcoming events only, plus the detail of events they
+    hold a ticket for. Staff filter with ?status=upcoming, which is checked against the
+    event's date and time. Filter with ?venue=1, search with ?search=gor,
     ?mine=true for the events the logged-in organizer manages (all events for admins).
     """
     queryset = (Event.objects.select_related('venue')
@@ -26,14 +29,22 @@ class EventViewSet(viewsets.ModelViewSet):
                 .order_by('event_date', 'event_time'))
     serializer_class = EventSerializer
     permission_classes = [IsOrganizerOrReadOnly, IsEventOwnerOrReadOnly]
-    filterset_fields = ['status', 'venue', 'event_date']
+    filterset_fields = ['venue', 'event_date']
     search_fields = ['title', 'venue__name']
     ordering_fields = ['event_date', 'title']
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().with_live_status()
+        user = self.request.user
+        if not sees_all_events(user):
+            visible = Q(live_status='upcoming')
+            if self.action != 'list' and user.is_authenticated:
+                ticketed = Booking.objects.filter(fan=user, status='confirmed').values('event')
+                visible |= Q(pk__in=ticketed)
+            queryset = queryset.filter(visible)
+        elif self.action == 'list' and self.request.query_params.get('status'):
+            queryset = queryset.filter(live_status=self.request.query_params['status'])
         if self.request.query_params.get('mine') in ('1', 'true'):
-            user = self.request.user
             if not user.is_authenticated:
                 return queryset.none()
             if not is_admin(user):

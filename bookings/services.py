@@ -56,7 +56,7 @@ def hold_seat(fan, event, seat):
     Place a temporary hold on a seat for the fan while they pay.
     Raises InvalidBooking or SeatUnavailable.
     """
-    if event.status != 'upcoming':
+    if event.current_status != 'upcoming':
         raise InvalidBooking('Bookings are only open for upcoming events.')
     if seat.venue_id != event.venue_id:
         raise InvalidBooking('This seat is not at the venue for this event.')

@@ -1,9 +1,11 @@
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
+from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from bookings.services import confirm_booking, hold_seat
+from bookings.services import InvalidBooking, confirm_booking, hold_seat
 from users.models import User
 from venues.models import Venue, SeatCategory, Seat
 
@@ -155,6 +157,82 @@ class EventOwnershipTests(APITestCase):
         self.assertEqual(self.client.patch(f'/api/venues/{self.venue.id}/', {'name': 'X'}).status_code, 403)
         self.client.force_authenticate(self.admin)
         self.assertEqual(self.client.patch(f'/api/venues/{self.venue.id}/', {'name': 'Kasarani Stadium'}).status_code, 200)
+
+
+class EventDateTests(APITestCase):
+    """The clock is fixed at noon so "today before/after kick-off" is exact."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.now = timezone.make_aware(datetime(2026, 6, 15, 12, 0))
+        cls.venue = Venue.objects.create(name='Kasarani', location='Nairobi', capacity=1)
+        category = SeatCategory.objects.create(venue=cls.venue, name='Regular', price=Decimal('1000'))
+        cls.seat = Seat.objects.create(venue=cls.venue, row_number=1, seat_number=1, category=category)
+        today = cls.now.date()
+        day = timedelta(days=1)
+        cls.events = {title: Event.objects.create(title=title, venue=cls.venue, event_date=when,
+                                                  event_time=kickoff, status=status)
+                      for title, when, kickoff, status in (
+                          ('Tomorrow', today + day, time(9, 0), 'upcoming'),
+                          ('Tonight', today, time(18, 0), 'upcoming'),
+                          ('This morning', today, time(9, 0), 'upcoming'),
+                          ('Overdue', today - day, time(18, 0), 'upcoming'),
+                          ('Finished', today + day, time(9, 0), 'completed'),
+                          ('Called off', today - day, time(9, 0), 'cancelled'),
+                      )}
+        cls.fan = User.objects.create_user(username='fan', password='x', role='fan')
+        cls.organizer = User.objects.create_user(username='org', password='x', role='organizer')
+        cls.gate = User.objects.create_user(username='gate', password='x', role='gate_staff')
+
+    def setUp(self):
+        patcher = patch('django.utils.timezone.now', return_value=self.now)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def titles(self, url):
+        return {e['title'] for e in self.client.get(url).data['results']}
+
+    def test_status_filter_uses_the_date(self):
+        self.client.force_authenticate(self.organizer)
+        self.assertEqual(self.titles('/api/events/?status=upcoming'), {'Tomorrow', 'Tonight'})
+        self.assertEqual(self.titles('/api/events/?status=ongoing'), {'This morning'})
+        self.assertEqual(self.titles('/api/events/?status=completed'), {'Overdue', 'Finished'})
+        self.assertEqual(self.titles('/api/events/?status=cancelled'), {'Called off'})
+        self.assertEqual(len(self.titles('/api/events/')), 6)
+
+    def test_python_and_database_rules_agree(self):
+        for event in Event.objects.with_live_status():
+            self.assertEqual(event.live_status, event.current_status, event.title)
+
+    def test_fans_and_visitors_only_list_upcoming(self):
+        for user in (None, self.fan):
+            self.client.force_authenticate(user)
+            self.assertEqual(self.titles('/api/events/'), {'Tomorrow', 'Tonight'})
+            self.assertEqual(self.titles('/api/events/?status=completed'), {'Tomorrow', 'Tonight'})
+
+    def test_fan_cannot_open_past_event(self):
+        self.client.force_authenticate(self.fan)
+        past = self.events['Overdue'].id
+        self.assertEqual(self.client.get(f'/api/events/{past}/').status_code, 404)
+        self.assertEqual(self.client.get(f'/api/events/{past}/seats/').status_code, 404)
+
+    def test_ticket_holder_can_still_open_their_past_event(self):
+        booking = hold_seat(self.fan, self.events['Tonight'], self.seat)
+        confirm_booking(booking)
+        Event.objects.filter(pk=booking.event_id).update(event_date=self.now.date() - timedelta(days=2))
+        self.client.force_authenticate(self.fan)
+        self.assertEqual(self.client.get(f'/api/events/{booking.event_id}/').status_code, 200)
+        self.assertNotIn('Tonight', self.titles('/api/events/'))
+
+    def test_gate_staff_see_today_after_kick_off(self):
+        self.client.force_authenticate(self.gate)
+        self.assertEqual(self.titles(f'/api/events/?event_date={self.now.date()}'), {'Tonight', 'This morning'})
+
+    def test_bookings_close_at_kick_off(self):
+        for title in ('This morning', 'Overdue'):
+            with self.assertRaises(InvalidBooking):
+                hold_seat(self.fan, self.events[title], self.seat)
+        self.assertEqual(hold_seat(self.fan, self.events['Tonight'], self.seat).status, 'pending')
 
 
 class AssetVersionTests(APITestCase):

@@ -64,7 +64,7 @@
               h('a', { href: `/events/${e.id}/` }, e.title),
               h('div', { class: 'muted small' }, `${e.venue_name}, ${e.venue_location}`)),
             h('td', { class: 'nowrap' }, `${fmt.date(e.event_date)} · ${fmt.time(e.event_time)}`),
-            h('td', {}, h('span', { class: `badge badge-${e.status}` }, fmt.statusLabel(e.status))),
+            h('td', {}, h('span', { class: `badge badge-${e.current_status}` }, fmt.statusLabel(e.current_status))),
             h('td', { class: 'num nowrap' },
               h('a', { class: 'btn btn-secondary btn-small', href: `/organizer/events/${e.id}/edit/` }, 'Edit')),
           ))),

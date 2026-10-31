@@ -12,11 +12,12 @@ class EventSerializer(serializers.ModelSerializer):
     venue_name = serializers.CharField(source='venue.name', read_only=True)
     venue_location = serializers.CharField(source='venue.location', read_only=True)
     price_from = serializers.SerializerMethodField()
+    current_status = serializers.CharField(read_only=True)
 
     class Meta:
         model = Event
         fields = ('id', 'title', 'description', 'venue', 'venue_name', 'venue_location',
-                  'event_date', 'event_time', 'status', 'price_from')
+                  'event_date', 'event_time', 'status', 'current_status', 'price_from')
 
     def get_price_from(self, event):
         """Cheapest seat category at the venue (annotated by EventViewSet), as a string like '300.00'."""

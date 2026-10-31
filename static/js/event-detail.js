@@ -17,8 +17,8 @@
   function hero() {
     return h('section', { class: 'event-hero' },
       h('h1', {}, event.title),
-      event.status !== 'upcoming'
-        ? h('span', { class: `badge badge-${event.status}` }, fmt.statusLabel(event.status))
+      event.current_status !== 'upcoming'
+        ? h('span', { class: `badge badge-${event.current_status}` }, fmt.statusLabel(event.current_status))
         : null,
       h('div', { class: 'event-meta' },
         h('span', {}, `📅 ${fmt.date(event.event_date)}`),
@@ -161,7 +161,7 @@
   /* ---------- Page ---------- */
 
   function render(root, seats) {
-    const bookable = event.status === 'upcoming';
+    const bookable = event.current_status === 'upcoming';
 
     root.replaceChildren(
       hero(),

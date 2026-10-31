@@ -1,7 +1,7 @@
-/* Event list page: search, status filter and "load more" pagination. */
+/* Event list page: search, status filter (staff only) and "load more" pagination. */
 (function () {
   'use strict';
-  const { api, h, fmt } = window.SB;
+  const { api, auth, h, fmt } = window.SB;
 
   let results, searchInput, statusSelect, loadMoreBtn;
   let nextUrl = null;
@@ -11,8 +11,8 @@
     return h('a', { class: 'event-card', href: `/events/${event.id}/` },
       h('div', { class: 'event-date-strip' },
         h('span', {}, `${fmt.date(event.event_date)} · ${fmt.time(event.event_time)}`),
-        event.status !== 'upcoming'
-          ? h('span', { class: `badge badge-${event.status}` }, fmt.statusLabel(event.status))
+        event.current_status !== 'upcoming'
+          ? h('span', { class: `badge badge-${event.current_status}` }, fmt.statusLabel(event.current_status))
           : null,
       ),
       h('div', { class: 'event-body' },
@@ -22,7 +22,7 @@
           event.price_from
             ? h('span', { class: 'price' }, `From ${fmt.kes(event.price_from)}`)
             : h('span', { class: 'muted' }, 'Prices TBA'),
-          h('span', { class: 'btn btn-small' }, 'Pick seats'),
+          h('span', { class: 'btn btn-small' }, event.current_status === 'upcoming' ? 'Pick seats' : 'View event'),
         ),
       ),
     );
@@ -68,7 +68,8 @@
   }
 
   function search() {
-    const params = new URLSearchParams({ ordering: 'event_date' });
+    // Past events read best with the most recent first.
+    const params = new URLSearchParams({ ordering: statusSelect.value === 'completed' ? '-event_date' : 'event_date' });
     if (statusSelect.value) params.set('status', statusSelect.value);
     if (searchInput.value.trim()) params.set('search', searchInput.value.trim());
 
@@ -89,7 +90,12 @@
 
     const pageParams = new URLSearchParams(location.search);
     searchInput.value = pageParams.get('q') || '';
-    if (pageParams.has('status')) statusSelect.value = pageParams.get('status');
+    const user = auth.user();
+    if (user && ['organizer', 'gate_staff', 'admin'].includes(user.role)) {
+      statusSelect.hidden = false;
+      document.getElementById('events-heading').textContent = 'Events';
+      if (pageParams.has('status')) statusSelect.value = pageParams.get('status');
+    }
 
     let debounce;
     searchInput.addEventListener('input', () => {

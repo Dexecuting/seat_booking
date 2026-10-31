@@ -6,6 +6,12 @@ def is_admin(user):
     return user.is_authenticated and (user.role == 'admin' or user.is_superuser)
 
 
+def sees_all_events(user):
+    """Staff can look at past events; fans and logged-out visitors only get upcoming ones."""
+    return user.is_authenticated and (
+        user.role in ('organizer', 'gate_staff', 'admin') or user.is_superuser)
+
+
 class IsFan(BasePermission):
     message = 'Only fan accounts can do this.'
 

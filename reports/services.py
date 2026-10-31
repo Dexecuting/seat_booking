@@ -121,7 +121,7 @@ def event_rows(venue=None, organizer=None):
     for e in events:
         cap = capacity.get(e.venue_id, 0)
         rows.append({
-            'id': e.id, 'title': e.title, 'date': e.event_date.isoformat(), 'status': e.status,
+            'id': e.id, 'title': e.title, 'date': e.event_date.isoformat(), 'status': e.current_status,
             'venue': e.venue.name, 'capacity': cap, 'sold': e.sold, 'held': e.held,
             'occupancy': round(e.sold / cap * 100, 1) if cap else 0,
             'checked_in': e.checked_in, 'revenue': _money(revenue.get(e.id)),

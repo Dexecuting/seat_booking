@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="page-head">
-  <h1>Upcoming events</h1>
+  <h1 id="events-heading">Upcoming events</h1>
   <p>Pick a match, choose your exact seat, and pay with M-Pesa.</p>
 </div>
 
@@ -16,7 +16,7 @@
   <input class="search" id="event-search" type="search" placeholder="Search by team or venue…" autocomplete="off">
 
   <label class="sr-only" for="event-status">Show</label>
-  <select id="event-status">
+  <select id="event-status" hidden>
     <option value="upcoming">Upcoming</option>
     <option value="ongoing">Happening now</option>
     <option value="completed">Past</option>
